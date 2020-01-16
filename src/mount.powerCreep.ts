@@ -1,5 +1,7 @@
 // 挂载拓展到 PowerCreep 原型
 export default function () {
+    if (!Creep.prototype._move) Creep.prototype._move = Creep.prototype.move
+
     _.assign(PowerCreep.prototype, PowerCreepExtension.prototype)
 }
 
@@ -19,17 +21,41 @@ class PowerCreepExtension extends PowerCreep {
         }
     }
 
+    public move(target: DirectionConstant | Creep): CreepMoveReturnCode | ERR_INVALID_TARGET | ERR_NOT_IN_RANGE {
+        return Creep.prototype.move.call(this, target)
+    }
+
+    public goTo(target: RoomPosition): CreepMoveReturnCode | ERR_NO_PATH | ERR_INVALID_TARGET | ERR_NOT_FOUND {
+        return Creep.prototype.goTo.call(this, target)
+    }
+
+    public requireCross(direction: DirectionConstant): Boolean {
+        return Creep.prototype.requireCross.call(this, direction)
+    }
+
     /**
      * 在指定房间生成自己
      * 
      * @param roomName 要生成的房间名
      * @returns OK 生成成功
      * @returns ERR_INVALID_ARGS 该房间没有视野
-     * @returns ERR_NOT_FOUND 该房间没有 PowerSpawn
+     * @returns ERR_NOT_FOUND 该房间不存在或者其中没有 PowerSpawn
      */
     private spawnAtRoom(roomName: string): OK | ERR_INVALID_ARGS | ERR_NOT_FOUND {
+        const targetRoom = Game.rooms[roomName]
+        if (!targetRoom || !targetRoom.powerSpawn) {
+            console.log(`[${this.name}] 找不到指定房间或者房间内没有 powerSpawn，请重新指定工作房间`)
+            return ERR_NOT_FOUND
+        }
+
         console.log(`[${this.name}] 进行生成！`)
-        return OK
+        const spawnResult = this.spawn(targetRoom.powerSpawn)
+        
+        if (spawnResult === OK) return OK
+        else {
+            console.log(`[${this.name}] 孵化异常! 错误码: ${spawnResult}`)
+            return ERR_INVALID_ARGS
+        }
     }
 
     /**

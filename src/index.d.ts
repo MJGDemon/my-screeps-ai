@@ -183,6 +183,13 @@ interface Room {
     // 在 Lab.work 中调用，一个房间只会执行一次
     _hasRunLab: boolean
 
+    // 房间基础服务
+    factory: StructureFactory
+    powerSpawn: StructurePowerSpawn
+    nuker: StructureNuker
+    mineral: Mineral
+    sources: Source[]
+
     // pos 处理 api
     serializePos(pos: RoomPosition): string
     unserializePos(posStr: string): RoomPosition | undefined
@@ -228,6 +235,10 @@ interface Room {
     removeRestrictedPos(pos: RoomPosition): void
 }
 
+interface RoomPosition {
+    directionToPos(direction: DirectionConstant): RoomPosition | undefined
+}
+
 /**
  * 房间内存
  */
@@ -269,8 +280,13 @@ interface RoomMemory {
     // 当前终端要监听的资源索引
     terminalIndex: number
     
-    // 房间内的元素矿id
+    // 房间内的资源和建筑 id
     mineralId: string
+    factoryId: string
+    extractorId: string
+    powerSpawnId: string
+    nukerId: string
+    sourceIds: string[]
     
     // Link 的专用内存字段
     links?: {
@@ -483,6 +499,8 @@ interface Memory {
         cpu?: number
         // bucket 当前数值
         bucket?: number
+        // 当前还有多少钱
+        credit?: number
 
         // 已经完成的房间物流任务比例
         roomTaskNumber?: {

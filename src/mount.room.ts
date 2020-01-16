@@ -1,9 +1,15 @@
+import mountRoomBase from './mount.roomBase'
 import { createHelp } from './utils'
 import { ENERGY_SHARE_LIMIT, BOOST_STATE, ROOM_TRANSFER_TASK } from './setting'
 
 // 挂载拓展到 Room 原型
 export default function () {
+    // 优先挂载 Room 基础服务
+    mountRoomBase()
+
+    // 再挂载 Room 拓展
     _.assign(Room.prototype, RoomExtension.prototype)
+    _.assign(RoomPosition.prototype, PositionExtension.prototype)
 }
 
 class RoomExtension extends Room {
@@ -1070,5 +1076,35 @@ class RoomExtension extends Room {
                 functionName: 'oresume'
             },
         ])
+    }
+}
+
+/**
+ * 房间位置拓展
+ */
+class PositionExtension extends RoomPosition {
+    /**
+     * 获取当前位置目标方向的 pos 对象
+     * 
+     * @param direction 目标方向
+     */
+    public directionToPos(direction: DirectionConstant): RoomPosition | undefined {
+        let targetX = this.x
+        let targetY = this.y
+
+        // 纵轴移动，方向朝下就 y ++，否则就 y --
+        if (direction !== LEFT && direction !== RIGHT) {
+            if (direction > LEFT || direction < RIGHT) targetY --
+            else targetY ++
+        }
+        // 横轴移动，方向朝右就 x ++，否则就 x --
+        if (direction !== TOP && direction !== BOTTOM) {
+            if (direction < BOTTOM) targetX ++
+            else targetX --
+        }
+
+        // 如果要移动到另一个房间的话就返回空，否则返回目标 pos
+        if (targetX < 0 || targetY > 49 || targetX > 49 || targetY < 0) return undefined
+        else return new RoomPosition(targetX, targetY, this.roomName)
     }
 }

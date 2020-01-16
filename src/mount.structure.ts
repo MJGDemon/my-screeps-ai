@@ -536,6 +536,8 @@ const FACTORY_TARGET_LIMIT = 500
  */
 class FactoryExtension extends StructureFactory {
     public work(): void {
+        // 实时更新房间内存中 factoryId
+        if (!this.room.memory.factoryId) this.room.memory.factoryId = this.id
         // 没有冷却好就直接跳过
         if (this.cooldown !== 0) return
         // 获取不到目标资源就跳过
@@ -918,8 +920,10 @@ class TerminalExtension extends StructureTerminal {
  */
 class ExtractorExtension extends StructureExtractor {
     public work(): void {
-        if (this.room.memory.mineralId) return
-        
+        // 下面两行确保 work 只执行一次
+        if (this.room.memory.extractorId) return
+        this.room.memory.extractorId = this.id
+
         // 获取 mineral 并将其 id 保存至房间内存
         const targets = this.room.find(FIND_MINERALS)
         const mineral = targets[0]
@@ -1421,6 +1425,8 @@ class ControllerExtension extends StructureController {
 class NukerExtension extends StructureNuker {
     public work(): void {
         this.stateScanner()
+        // 注册自己的 id 来让房间基础服务可以发现自己
+        if (!this.room.memory.nukerId) this.room.memory.nukerId = this.id
 
         if (Game.time % 30) return
 
@@ -1469,6 +1475,9 @@ class NukerExtension extends StructureNuker {
 class PowerSpawnExtension extends StructurePowerSpawn {
     public work(): void {
         if (Game.time % 5) return
+        // 注册自己的 id 来让房间基础服务可以发现自己
+        if (!this.room.memory.powerSpawnId) this.room.memory.powerSpawnId = this.id
+        // 兜底
         if (!this.room.memory.powerSpawn) this.room.memory.powerSpawn = {}
         if (this.room.memory.powerSpawn.pause) return
 
